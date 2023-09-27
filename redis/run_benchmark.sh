@@ -2,7 +2,7 @@
 
 if [ -z "$1" ]
 then
-  n=4
+  n=5
 else
   n=$1
 fi
