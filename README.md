@@ -1,1 +1,3 @@
-# 常用服务器应用程序的性能测试
+# Application benchmark
+
+Some automatic shell and python scripts to run benchmark for famous applications and visualize benchmark results
