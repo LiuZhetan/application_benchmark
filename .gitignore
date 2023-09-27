@@ -1,0 +1,4 @@
+.vscode/
+results/
+dump.rdb
+redis_server_info.txt
