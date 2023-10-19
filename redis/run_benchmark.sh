@@ -1,21 +1,71 @@
 #!/bin/bash
 
 # 初始化变量
-test_num=5
+test_num=8
 prefix="local"
+ouput_dir="results"
 limit_cpu="none"
+linear_growth=1
+growth_rate=1
+init_clients=50
+init_query=10000
+pipelines=16
+data_size=32
+extra_args=""
+
+help_info="run_benchmark [options]
+
+  -h 帮助
+  -n [iter_num] 测试轮次(测试迭代次数)
+  -o [ouput_directory] 输出的文件夹,默认为output
+  -p [prefix] 输出文件的前缀
+  -C [limit_cpus] 使用cset限制测试运行在limit_cpu上,limit_cpu可以是一个列表,例如-l 0,1将测试限制在cpu0和cpu1上
+  -e 指数级别增长测试规模(默认线性增长,即:每次规模迭代,测试规模翻倍)
+  -r [growth_rate] 每次迭代后测试规模增长的比例,默认为1
+  -c [client_num] 初始的客户数目
+  -q [total_query_num] 初始的总请求数目
+  -P redis-benchmark pipeline
+  -d redis-benchmark data size
+  -A [args] 其他redis-benchmark参数
+  "
+
 
 # 使用 getopts 处理参数
-while getopts "n:p:l:" opt; do
+while getopts "hn:p:o:C:lc:q:P:d:A" opt; do
   case ${opt} in
+    h)
+      echo -e "$help_info"
+      exit 1
+      ;;
     n)
-      num=$OPTARG
+      test_num=$OPTARG
       ;;
     p)
       prefix=$OPTARG
       ;;
-    l)
+    o)
+      ouput_dir=$OPTARG
+      ;;
+    C)
       limit_cpu=$OPTARG
+      ;;
+    l)
+      linear_growth=1
+      ;;
+    c)
+      init_clients=$OPTARG
+      ;;
+    q)
+      init_query=$OPTARG
+      ;;
+    P)
+      pipelines=$OPTARG
+      ;;
+    d)
+      data_size=$OPTARG
+      ;;
+    A)
+      extra_args=$OPTARG
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -32,7 +82,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 CWD=$(pwd)
 
 cd "$DIR" || exit
-mkdir -p results
+mkdir -p "$ouput_dir"
 
 RUN_SERVER="redis-server"
 RUN_CLI="redis-cli"
@@ -71,13 +121,18 @@ echo "============================="
 
 for ((i=1; i <= test_num; i++))
 do
-    num=$((2**(i-1)))
+    if [ $linear_growth == 0 ]; then
+      num=$((2**(i-1)))
+    else
+      num=i
+    fi
+    num=$((growth_rate*num))
     echo Clinet and query num X$num
-    clinet_num=$((num*50))
-    query_total=$((num*10000))
-    echo "$RUN_BENCHMARK" -P 16 -d 32 -c $clinet_num -n $query_total --csv "$CUT_HEAD"
-    $RUN_BENCHMARK -P 16 -d 32 -c $clinet_num -n $query_total --csv ${CUT_HEAD} \
-    | sudo tee results/"$prefix"-redis-benchmark-client:$clinet_num-query:$query_total.csv
+    clinet_num=$((num*init_clients))
+    query_total=$((num*init_query))
+    echo "$RUN_BENCHMARK -P $pipelines -d $data_size -c $clinet_num -n $query_total --csv $CUT_HEAD $extra_args"
+    $RUN_BENCHMARK -P $pipelines -d $data_size -c $clinet_num -n $query_total --csv ${CUT_HEAD} $extra_args \
+    | sudo tee $ouput_dir/"$prefix"-redis-benchmark-client:$clinet_num-query:$query_total.csv
 done
 
 echo "......Finished Benchmark....."
