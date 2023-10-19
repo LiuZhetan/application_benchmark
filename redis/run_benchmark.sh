@@ -59,7 +59,7 @@ fi
 sleep 4 
 
 echo "Measuring latency:"
-$RUN_CLI --latency -i 5 "$CUT_HEAD" | tee results/latency.txt
+$RUN_CLI --latency -i 5 "$CUT_HEAD" | sudo tee results/latency.txt
 
 #echo "Measuring intrinsic latency, it takes 80 seconds......"
 #$RUN_CLI --csv --intrinsic-latency 80  "$CUT_HEAD" | tee results/intrinsic-latency.txt
@@ -76,8 +76,8 @@ do
     clinet_num=$((num*50))
     query_total=$((num*10000))
     echo "$RUN_BENCHMARK" -P 16 -d 32 -c $clinet_num -n $query_total --csv "$CUT_HEAD"
-    $RUN_BENCHMARK -P 16 -d 32 -c $clinet_num -n $query_total --csv "$CUT_HEAD" \
-    | tee results/"$prefix"-redis-benchmark-client:$clinet_num-query:$query_total.csv
+    $RUN_BENCHMARK -P 16 -d 32 -c $clinet_num -n $query_total --csv ${CUT_HEAD} \
+    | sudo tee results/"$prefix"-redis-benchmark-client:$clinet_num-query:$query_total.csv
 done
 
 echo "......Finished Benchmark....."
