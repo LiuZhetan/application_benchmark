@@ -118,7 +118,8 @@ echo "$CUT_HEAD"
 
 echo "......Running benchmark......"
 echo "============================="
-
+echo "redis-benchmark args: -P $pipelines -d $data_size $extra_args" \
+      | tee $ouput_dir/benchmark-args.txt
 for ((i=1; i <= test_num; i++))
 do
     if [ $linear_growth == 0 ]; then
