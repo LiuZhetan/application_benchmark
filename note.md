@@ -159,3 +159,38 @@
     -- -P 16 -d 32 -c 100 -n 20000 --csv \
     | tail -n +2 > redis-benchmark.csv 
     ```
+
+### 资源监控
+
+1. CPU使用率监控
+
+    常用工具top、htop，但是htop只能交互式监控
+
+    ```shell
+    # 使用top
+    top -b -p [PID]
+    ```
+
+2. 网络带宽监控
+
+    nload和lftop都可以实时监控interface的bandwith
+
+    ```shell
+    # 查看interface
+    ifconfig
+    # 使用nload
+    nload lo
+    # 使用lftop
+    lftop -i lo -P
+    ```
+
+    使用tc限制lo的bandwidth
+
+    ```shell
+    # 增加一个tbf队列
+    sudo tc qdisc add dev lo root tbf rate 1mbit burst 32kbit latency 40ms
+    # 查看
+    sudo tc -s qdisc show dev lo
+    # 删除
+    sudo tc qdisc del dev lo root
+    ```
