@@ -184,7 +184,7 @@
     lftop -i lo -P
     ```
 
-    使用tc限制lo的bandwidth
+    使用tc限制lo的bandwidth，注意wsl无法正常使用tc工具，因为wsl无法load module
 
     ```shell
     # 增加一个tbf队列
@@ -194,3 +194,5 @@
     # 删除
     sudo tc qdisc del dev lo root
     ```
+
+    测试硬盘的I/O性能，参考[这里](https://askubuntu.com/questions/87035/how-to-check-hard-disk-performance)
