@@ -160,7 +160,7 @@
     | tail -n +2 > redis-benchmark.csv 
     ```
 
-### 资源监控
+## 资源监控
 
 1. CPU使用率监控
 
@@ -173,7 +173,7 @@
 
 2. 网络带宽监控
 
-    nload和lftop都可以实时监控interface的bandwith
+    nload和lftop都可以实时监控interface的bandwith，但是nload是交互式界面，重定位输出可读性差，iftop只能以过去2s、5s、10s的形式监测。nethogs可以交互式检测进程send和receive的数据。ifstat实时打印网络设备的带宽。
 
     ```shell
     # 查看interface
@@ -181,7 +181,14 @@
     # 使用nload
     nload lo
     # 使用lftop
-    lftop -i lo -P
+    iftop -i lo -P
+    # 使用iftop后台打印日志,必须要用-s选项指定时间结束后才输出
+    # 不能实时监控，不好用
+    sudo iftop -i lo -s 15 -Pt > net.log &
+    # nethogs显示send和receive的数据
+    sudo nethogs -a lo
+    # 实时打印loopback上的带宽
+    ifstat -i lo > net.log &
     ```
 
     使用tc限制lo的bandwidth，注意wsl无法正常使用tc工具，因为wsl无法load module
@@ -195,4 +202,23 @@
     sudo tc qdisc del dev lo root
     ```
 
+3. 磁盘I/O性能测试与监控
+
     测试硬盘的I/O性能，参考[这里](https://askubuntu.com/questions/87035/how-to-check-hard-disk-performance)
+
+    ```shell
+    # Sequential READ speed with big blocks QD32
+    fio --name TEST --eta-newline=5s --filename=fio-tempfile.dat --rw=read --size=500m --io_size=10g --blocksize=1024k --ioengine=libaio --fsync=10000 --iodepth=32 --direct=1 --numjobs=1 --runtime=60 --group_reporting
+    # Sequential WRITE speed with big blocks QD32
+    fio --name TEST --eta-newline=5s --filename=fio-tempfile.dat --rw=write --size=500m --io_size=10g --blocksize=1024k --ioengine=libaio --fsync=10000 --iodepth=32 --direct=1 --numjobs=1 --runtime=60 --group_reporting
+    # Random 4K read QD1
+    fio --name TEST --eta-newline=5s --filename=fio-tempfile.dat --rw=randread --size=500m --io_size=10g --blocksize=4k --ioengine=libaio --fsync=1 --iodepth=1 --direct=1 --numjobs=1 --runtime=60 --group_reporting
+    # Mixed random 4K read and write QD1 with sync
+    fio --name TEST --eta-newline=5s --filename=fio-tempfile.dat --rw=randrw --size=500m --io_size=10g --blocksize=4k --ioengine=libaio --fsync=1 --iodepth=1 --direct=1 --numjobs=1 --runtime=60 --group_reporting
+    ```
+
+    使用iotop监控磁盘I/O：
+
+    ```shell
+    sudo iotop -o -p 977 -b -d 0.5 -n 100 -t -q > io.log &
+    ```

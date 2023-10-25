@@ -1,0 +1,14 @@
+Listening on lo
+   # Host name (port/service if enabled)            last 2s   last 10s   last 40s cumulative
+--------------------------------------------------------------------------------------------
+   1 localhost                                =>      443Mb     1.05Gb      647Mb     1.58GB
+     localhost                                <=         0b         0b         0b         0B
+--------------------------------------------------------------------------------------------
+Total send rate:                                      443Mb     1.05Gb      647Mb
+Total receive rate:                                      0b         0b         0b
+Total send and receive rate:                          443Mb     1.05Gb      647Mb
+--------------------------------------------------------------------------------------------
+Peak rate (sent/received/total):                     1.31Gb         0b     1.31Gb
+Cumulative (sent/received/total):                    1.58GB         0B     1.58GB
+============================================================================================
+
