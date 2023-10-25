@@ -5,4 +5,4 @@ redis_server_info.txt
 test.sh
 jvm/*.jar
 *.dat
-**/net.log
+**/.log
