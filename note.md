@@ -222,3 +222,55 @@
     ```shell
     sudo iotop -o -p 977 -b -d 0.5 -n 100 -t -q > io.log &
     ```
+
+## JVM
+
+### 使用Renaissance Suite
+
+在[这里](https://renaissance.dev/download)下载renaissance-gpl-XXX.jar, 参考[文档](https://renaissance.dev/docs)运行下面的命令：
+
+```shell
+# install
+curl -O https://github.com/renaissance-benchmarks/renaissance/releases/download/v0.15.0/renaissance-gpl-0.15.0.jar
+# use alias
+alias jvm-test="java -jar 'renaissance-gpl-0.15.0.jar'"
+# jvm-test <benchmark>, take als for example
+jvm-test als --csv als.csv > als.log 2>&1 &
+```
+
+## Postgre SQL
+
+准备安装：
+
+```shell
+cd ~
+curl -O https://ftp.postgresql.org/pub/source/v16.0/postgresql-16.0.tar.gz
+tar -xvf postgresql-16.0.tar.gz
+rm postgresql-16.0.tar.gz && cd postgresql-16.0
+# 
+./configure
+make
+make install
+su
+adduser postgres
+mkdir -p /usr/local/pgsql/data
+chown postgres /usr/local/pgsql/data
+su - postgres
+/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data
+/usr/local/pgsql/bin/pg_ctl -D /usr/local/pgsql/data -l logfile start
+/usr/local/pgsql/bin/createdb test
+/usr/local/pgsql/bin/psql test
+```
+
+测试举例：
+
+```shell
+# 创建测试表
+pgbench -i -s 10 --partition-method=hash --partitions=100 test -U postgres
+# 进行测试
+pgbench -c 100 --protocol extended -j 12 test -U postgres
+# 删除测试表
+su postgres -c "/usr/local/pgsql/bin/pgbench -i -I d"
+# 关闭服务器
+su postgres -c "pg_ctl stop -D /usr/local/pgsql/data"
+```
