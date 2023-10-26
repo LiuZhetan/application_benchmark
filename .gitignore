@@ -6,4 +6,4 @@ test.sh
 jvm/*.jar
 **/*.dat
 **/*.log
-**/*.csv
+rv_results/

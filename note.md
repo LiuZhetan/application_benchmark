@@ -220,7 +220,7 @@
     使用iotop监控磁盘I/O：
 
     ```shell
-    sudo iotop -o -p 977 -b -d 0.5 -n 100 -t -q > io.log &
+    sudo iotop -o -p [PID] -b -d 0.5 -n 100 -t -q > io.log &
     ```
 
 ## JVM
@@ -274,3 +274,7 @@ su postgres -c "/usr/local/pgsql/bin/pgbench -i -I d"
 # 关闭服务器
 su postgres -c "pg_ctl stop -D /usr/local/pgsql/data"
 ```
+
+## 安装Kafka
+
+先安装scala

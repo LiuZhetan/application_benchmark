@@ -112,7 +112,7 @@ echo "Measuring latency:"
 $RUN_CLI --latency -i 5 "$CUT_HEAD" | sudo tee results/latency.txt
 
 #echo "Measuring intrinsic latency, it takes 80 seconds......"
-#$RUN_CLI --csv --intrinsic-latency 80  "$CUT_HEAD" | tee results/intrinsic-latency.txt
+#$RUN_CLI --csv --intrinsic-latency 80  "$CUT_HEAD" | sudo tee results/intrinsic-latency.txt
 
 echo "$CUT_HEAD"
 
