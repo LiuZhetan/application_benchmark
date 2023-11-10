@@ -106,8 +106,6 @@ else
     $RUN_SERVER > redis_server_info.txt 2>&1 &
 fi
 
-sleep 4 
-
 echo "Measuring latency:"
 $RUN_CLI --latency -i 5 "$CUT_HEAD" | sudo tee results/latency.txt
 
