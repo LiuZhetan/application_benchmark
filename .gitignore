@@ -7,3 +7,5 @@ jvm/*.jar
 **/*.dat
 **/*.log
 rv_results/
+__pycache__
+**/harness*
