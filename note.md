@@ -187,8 +187,10 @@
     sudo iftop -i lo -s 15 -Pt > net.log &
     # nethogs显示send和receive的数据
     sudo nethogs -a lo
+    # vnstat采样最近两秒的带宽
+    vnstat -i lo -tr 2
     # 实时打印loopback上的带宽
-    ifstat -i lo > net.log &
+    ifstat -t -n -i lo > net.log &
     ```
 
     使用tc限制lo的bandwidth，注意wsl无法正常使用tc工具，因为wsl无法load module
@@ -278,3 +280,37 @@ su postgres -c "pg_ctl stop -D /usr/local/pgsql/data"
 ## 安装Kafka
 
 先安装scala
+
+## 其他
+
+### python脚本相关
+
+1. 在后台执行执行带sudo的shell命令
+
+    在shell中使用sudo -S可以通过标准输入与后台进程交互
+
+   ```shell
+   # 使用shell
+   sudo -S command &
+   ```
+
+    在python里需要使用subprocess的管道或者Popen对象的communicate函数进行交互，例如：输入sudo的命令，结合getpass获取终端的密码输入并执行sudo
+
+    ```python
+   # 获取密码并执行
+   def monitor_io(pid:int, out_fd):
+    password = getpass.getpass("[sudo] enter your password: ")
+    proc =  subprocess.Popen(
+        f'sudo -S bash -c "iotop -o -p {pid} -b -t -q "', 
+        shell=True, 
+        stdin=subprocess.PIPE,
+        stdout=out_fd)
+    proc.communicate(password.encode(), 0.5)
+    return proc
+   ```
+
+   如果只是需要sudo获得权限的话，直接使用check_call函数执行一个小型程序即可
+
+   ```python
+   subprocess.run(['sudo','ls','/root'], stdout=subprocess.DEVNULL)
+   ```
