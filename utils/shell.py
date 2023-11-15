@@ -36,5 +36,5 @@ def sudo_force_run_background(cmd:str) -> Popen:
         return proc
 
 if __name__=="__main__":
-    sudo()
+    # sudo()
     os.kill(sudo_force_run_background('sudo sleep 100').pid, signal.SIGKILL)
