@@ -8,6 +8,7 @@ from logging import info, debug
 import time
 
 from monitor.state import monitor_cpu, monitor_io, monitor_net
+from utils.logging import set_log
 from utils.shell import shell_out, shell_run, shell_call, sudo, shell_background
 
 def parse_args():
@@ -17,6 +18,8 @@ def parse_args():
     parser.add_argument('--prefix', default="local", metavar='str', type=str, help='输出文件的前缀')
     parser.add_argument('--server_cpu', default="0", metavar='cpu1,...,cpuN', type=str, help='限制redis-server在某些cpu上')
     parser.add_argument('--clinet_cpu', default="1", metavar='cpu1,...,cpuN', type=str, help='限制redis-benchamrk的client在某些cpu上')
+    parser.add_argument('--monitor_iface', default="lo", metavar='interface1,...,interfaceN', type=str, help='监控的interface')
+    parser.add_argument('--monitor_disk', default="sda,sdb,sdc", metavar='dev1,...,devN', type=str, help='监控的磁盘')
     parser.add_argument('--growth_fun', default="linear", type=str, help='每次迭代规模增长的函数，默认线性函数')
     parser.add_argument('--growth_rate', default=1, type=float, help='增长因子,growth_fun计算增长规模后乘以增长因子即为下一次的测试规模')
     parser.add_argument('--initial_clinet', default=50, type=int, help='初始的客户数目')
@@ -26,6 +29,7 @@ def parse_args():
     parser.add_argument('--shutdown', action='store_true', help='运行结束后关闭服务器')
     parser.add_argument('--log', default='info', type=str, help='日志层级,分别为info、debug、error')
     parser.add_argument('--latency', action='store_true', help='是否测试redis latency')
+    parser.add_argument('--disable_monitor', action='store_true', help='禁用性能监控')
     parser.add_argument('--others', default='', metavar='option val', type=str, help='redis-benchmark 的其他参数，使用空格分隔')
     return parser.parse_args()
 
@@ -36,17 +40,6 @@ def start_server() -> subprocess.Popen[bytes]:
     except subprocess.CalledProcessError as e:
         logging.error(e)
         raise Exception('Fail to start redis server')
-    
-def set_log(log:str):
-    log_dict = {
-        'info': logging.INFO,
-        'error': logging.ERROR,
-        'debug': logging.DEBUG,
-    }
-    if log in log_dict.keys():
-        logging.basicConfig(level=log_dict[log])
-    else:
-        logging.basicConfig(level=logging.INFO)
 
 def set_growth_fun(fun:str):
     fun_dict = {
@@ -65,8 +58,6 @@ def kill_all(p:subprocess.Popen):
 def handler(signum, frame):
     sudo()
     shell_run('sudo pkill sar')
-    shell_run('sudo pkill ifstat')
-    shell_run('sudo pkill iotop')
     exit(0)
 
 signal.signal(signal.SIGINT, handler)
@@ -109,7 +100,7 @@ def main(args):
 
         num = growth_fun(i)
         num *= args.growth_rate
-        info(f'echo Clinet and query num X{num}')
+        info(f'echo Clinet and query num X{num}, run on cpu{args.clinet_cpu}')
         clinet_num = num * args.initial_clinet
         query_total = num * args.initial_request
         bench_cmd = f'taskset -c {args.clinet_cpu} redis-benchmark ' + \
@@ -119,25 +110,30 @@ def main(args):
                     f'| sudo tee {out_dir}/{args.prefix}-redis-benchmark-client:' + \
                     f'{clinet_num}-query:{query_total}.csv'
         info(f"{bench_cmd}")
-        # 启动监控程序
-        cpu = monitor_cpu(args.server_cpu+','+args.clinet_cpu ,f'{path}/cpu/iter{i}_cpu.log')
-        net = monitor_net('lo' ,f'{path}/net/iter{i}_net.log')
-        io = monitor_io('sda' ,f'{path}/io/iter{i}_io.log')
-        time.sleep(2)
+        
+        if not args.disable_monitor:
+            # 启动监控程序
+            cpu = monitor_cpu(args.server_cpu+','+args.clinet_cpu ,f'{path}/cpu/iter{i}_cpu.log')
+            net = monitor_net(args.monitor_iface ,f'{path}/net/iter{i}_net.log')
+            io = monitor_io(args.monitor_disk ,f'{path}/io/iter{i}_io.log')
+            time.sleep(2)
+        
         shell_call(bench_cmd)
-        # 关闭监控程序
-        time.sleep(4)
-        kill_all(cpu)
-        kill_all(net)
-        kill_all(io)
-        time.sleep(0.5)
+
+        if not args.disable_monitor:
+            # 关闭监控程序
+            time.sleep(4)
+            kill_all(cpu)
+            kill_all(net)
+            kill_all(io)
+            time.sleep(0.5)
 
     info("......Finished Benchmark.....")
     info("=============================")
 
     if args.shutdown:
         info('shutdown redis server')
-        os.kill(server_pid, signal.SIGKILL)
+        shell_call(f'pkill -P  {server_pid}')
 
 if __name__=="__main__":
     args = parse_args()
@@ -148,5 +144,5 @@ if __name__=="__main__":
     p_dir = os.path.dirname(sys.argv[0])
     debug(f"change to directory {p_dir}")
     os.chdir(p_dir)
-    shell_call(f'mkdir -p {args.ouput}')
+
     main(args)
