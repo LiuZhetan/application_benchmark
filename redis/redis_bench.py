@@ -7,7 +7,7 @@ import logging
 from logging import info, debug
 import time
 
-from monitor.state import monitor_cpu, monitor_net
+from monitor.state import monitor_cpu, monitor_io, monitor_net
 from utils.shell import shell_out, shell_run, shell_call, sudo, shell_background
 
 def parse_args():
@@ -122,12 +122,14 @@ def main(args):
         # 启动监控程序
         cpu = monitor_cpu(args.server_cpu+','+args.clinet_cpu ,f'{path}/cpu/iter{i}_cpu.log')
         net = monitor_net('lo' ,f'{path}/net/iter{i}_net.log')
+        io = monitor_io('sda' ,f'{path}/io/iter{i}_io.log')
         time.sleep(2)
         shell_call(bench_cmd)
         # 关闭监控程序
         time.sleep(4)
         kill_all(cpu)
         kill_all(net)
+        kill_all(io)
         time.sleep(0.5)
 
     info("......Finished Benchmark.....")
