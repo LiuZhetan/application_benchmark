@@ -34,6 +34,9 @@ def sudo_force_run_background(cmd:str) -> Popen:
         proc.communicate(password.encode(),timeout=0.01)
     except subprocess.TimeoutExpired:
         return proc
+    
+def file_exists(filepath):
+    return os.path.isfile(filepath)
 
 if __name__=="__main__":
     # sudo()
