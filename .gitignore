@@ -11,3 +11,4 @@ __pycache__
 **/harness*
 **/launcher*
 local_results/
+**/*.d

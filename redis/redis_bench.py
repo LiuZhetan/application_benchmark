@@ -78,6 +78,7 @@ def main(args):
     time.sleep(2)
     
     out_dir = args.ouput
+    shell_call(f'mkdir -p{out_dir}')
     if args.latency == 1:
         info("Measuring latency......")
         shell_call(f'redis-cli --latency -i 5 | sudo tee {out_dir}/latency.txt')
